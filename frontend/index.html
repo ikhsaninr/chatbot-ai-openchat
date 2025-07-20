@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="style.css" />
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Chatbot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center min-h-screen p-4">
+  <div class="w-full max-w-xl space-y-4">
+    <h1 class="text-2xl font-bold text-center">Chatbot AI (OpenChat)</h1>
+    <div id="chat" class="bg-gray-800 p-4 h-96 overflow-y-auto rounded shadow-inner space-y-2"></div>
+    <form id="chat-form" class="flex space-x-2">
+      <input type="text" id="user-input" placeholder="Ketik pesan..." class="flex-1 p-2 rounded text-black" required />
+      <button type="submit" class="bg-blue-500 px-4 py-2 rounded">Kirim</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('chat-form');
+    const input = document.getElementById('user-input');
+    const chat = document.getElementById('chat');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const userMessage = input.value;
+      input.value = '';
+
+      chat.innerHTML += `<div><strong>Kamu:</strong> ${userMessage}</div>`;
+      chat.scrollTop = chat.scrollHeight;
+
+      const res = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage })
+      });
+
+      const data = await res.json();
+      chat.innerHTML += `<div><strong>Bot:</strong> ${data.response || data.error}</div>`;
+      chat.scrollTop = chat.scrollHeight;
+    });
+  </script>
+</body>
+</html>
