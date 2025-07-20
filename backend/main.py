@@ -1,12 +1,11 @@
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import requests
 import os
+import requests
+from fastapi import FastAPI
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# CORS untuk frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,38 +14,29 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
 class Message(BaseModel):
     message: str
 
-# === SETTING ===
-OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")  # Di-set di Render Dashboard (Environment Variable)
-MODEL = "openchat/openchat-3.5"  # Atau ganti model lain: "meta-llama/llama-3-8b-instruct", "mistralai/mistral-7b-instruct", dst.
+@app.get("/")
+def root():
+    return {"message": "Chatbot API is running!"}
 
 @app.post("/chat")
-async def chat(msg: Message):
+def chat(msg: Message):
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json",
+        "HTTP-Referer": "https://chatbot-ai-openchat.onrender.com",
+        "X-Title": "Chatbot by Ikhsan"
+    }
+
     payload = {
-        "model": MODEL,
+        "model": "openchat",
         "messages": [{"role": "user", "content": msg.message}],
         "stream": False
     }
 
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "HTTP-Referer": "https://chatbot-ai-openchat.onrender.com/",  # domain
-        "X-Title": "Chatbot AI by Ikhsan"           # Nama project kamu
-    }
-
-    try:
-        response = requests.post(OPENROUTER_API_URL, json=payload, headers=headers)
-        response.raise_for_status()
-        data = response.json()
-        return {
-            "response": data['choices'][0]['message']['content']
-        }
-    except Exception as e:
-        return {"error": str(e)}
-
-@app.get("/")
-async def root():
-    return {"message": "Chatbot API is running!"}
+    response = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers)
+    return response.json()
