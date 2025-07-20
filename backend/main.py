@@ -46,3 +46,7 @@ async def chat(msg: Message):
         }
     except Exception as e:
         return {"error": str(e)}
+
+@app.get("/")
+async def root():
+    return {"message": "Chatbot API is running!"}
